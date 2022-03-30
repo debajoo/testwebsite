@@ -1,18 +1,25 @@
-name: Upload Website
-on:
-  push:
-    branches:
-    - main
+name: Publish Website
+on: push
 jobs:
-  deploy:
+  publish:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3.0.0
-    - uses: shallwefootball/s3-upload-action@master
+    - uses: osiegmar/s3-publish@v0
       with:
-        args: --acl public-read --follow-symlinks --delete
+        args: >
+          --bucket=my_bucket
+          --compare-cache-policy
+          --delete-orphaned
+          --exclude="**/.gitkeep"
+          --default-acl="public-read"
+          --default-cache-policy="no-store"
+          --prefix="preview/"
+          --glob="static/**" --cache-policy="public, max-age=604800, immutable"
+          --glob="robots.txt" --cache-policy="public, max-age=86400, must-revalidate"
+          --glob="**/*.html" --cache-policy="public, no-cache"
+          dist
       env:
-        S3_ENDPOINT: 'http://testwebsitepractice.com.s3-website.af-south-1.amazonaws.com'
-        AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: 'us-west-1' # optional: defaults to us-east-1
